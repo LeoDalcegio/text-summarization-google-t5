@@ -1,25 +1,4 @@
 from flask import Flask, jsonify, request
-from sparknlp.base import DocumentAssembler
-from sparknlp.annotator import T5Transformer
-from pyspark.ml import Pipeline
-from pyspark.sql import SparkSession
-import sparknlp
-
-spark = sparknlp.start()
-
-document_assembler = DocumentAssembler() \
-    .setInputCol("text") \
-    .setOutputCol("documents")
-
-t5 = T5Transformer() \
-    .pretrained("t5_base") \
-    .setTask("summarize:")\
-    .setMaxOutputLength(100)\
-    .setInputCols(["documents"]) \
-    .setOutputCol("summaries")
-
-pipe_components = [document_assembler, t5]
-pipeline = Pipeline().setStages(pipe_components)
 
 app = Flask(__name__)
 
@@ -28,17 +7,11 @@ app = Flask(__name__)
 def predict_func():
     test_data = request.get_json()
 
-    data_df = spark.createDataFrame(test_data.sentences).toDF("text")
-
-    results = pipeline.fit(data_df).transform(data_df)
-
-    output = results.select("summaries.result").collect(truncate=False)
-
-    return jsonify(output)
+    return jsonify(test_data)
 
 
 if __name__ == "__main__":
-  app.run(port=3000, debug=True)
+    app.run(port=3000, debug=True)
 
 """
 
